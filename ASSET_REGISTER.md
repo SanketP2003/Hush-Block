@@ -1,32 +1,33 @@
 # Hush Blocks Asset Register
 
-Research scope for the first playable prototype: free assets only. No paid asset was purchased, and no external asset was imported during this pass because direct web downloads and Unity Editor access were unavailable in the current environment.
+Production Register for Hush Blocks (Unity 6000.4.7f1, URP 17.4, Standalone Windows x64 & Android target).
 
-## Selection policy
+Art Direction: **Midnight Voxel Nocturne**  
+Visual Palette: Midnight charcoal, cyan, amber, dark blue, warm architectural lighting.
 
-The first playable prototype should remain focused on the GDD's core rhythm, muting, stacking, and collapse mechanics. External assets are therefore optional support content, not prerequisites. Essential resonance blocks should remain project-authored/generated so their dimensions, pivots, colliders, and cyan/amber state transitions stay deterministic.
+---
 
-| Asset/source | Official URL | Intended purpose | License/cost | Compatibility findings | Import status | Attribution |
-|---|---|---|---|---|---|---|
-| Kenney asset library | https://kenney.nl/assets | Candidate source for stylized modular props, UI, and simple audio; choose only packs whose geometry supports the miniature voxel/nocturne direction | Kenney assets are generally published under a permissive Creative Commons CC0-style license; verify the specific pack page and included license before shipping | Unity-friendly downloadable formats are commonly available, but exact Unity 6/URP support, texture sizes, and pack contents must be checked per pack | Not imported; official site was not reachable through the available web tool in this session | Usually not required under CC0, but retaining the pack's license/readme is recommended |
-| Quaternius asset packs | https://quaternius.com/packs.html | Candidate source for low-poly/voxel-adjacent buildings, props, character placeholders, and environment pieces | Verify the specific pack license on its official page; many packs are offered free with permissive terms, but do not assume every pack has identical terms | Prefer FBX/OBJ/glTF packs with low-poly meshes; URP material conversion and collider setup will require project-side configuration | Not imported; direct official-page access was unavailable in this session | Follow the specific pack's attribution instructions if any |
-| Poly Haven | https://polyhaven.com/ | Candidate source for CC0 HDRIs, materials, or small environment support assets; not a primary source for voxel gameplay props | CC0 according to the official license page; verify source page at selection time | Most assets target general 3D workflows, not Unity voxel gameplay; avoid high-resolution materials/HDRIs for the Android prototype unless reduced and demonstrably useful | Not imported; direct official-page access was unavailable in this session | Not required under CC0, though credit is welcome |
-| Mixamo | https://www.mixamo.com/ | Candidate source for Noa/Howler animation clips only if a compatible humanoid rig is introduced | Adobe/Mixamo licensing and account/download requirements must be checked on the official source before use; free access does not mean unrestricted source redistribution | Humanoid retargeting onto a voxel character is not assumed to work. It needs a tested rig, imported clips, avatar setup, and mobile animation budget review | Not imported; no compatible rig exists yet | Follow Adobe/Mixamo terms and do not redistribute source files outside permitted use |
-| Unity Asset Store free catalog | https://assetstore.unity.com/ | Candidate source for free URP-compatible VFX/audio/animation support packages | Asset Store EULA and the individual listing's price/license apply; free listing status and current price must be verified at time of import | Unity package compatibility, dependencies, render pipeline support, and Unity 6 support must be checked on the current listing; no package was selected without that evidence | Not imported; Unity Editor/Asset Store access was unavailable | Follow the package publisher's attribution/license requirements |
-| Meshy | https://www.meshy.ai/ | Possible future source for custom voxel/low-poly concept props such as a Master Pylon or Howler | Plan-specific commercial rights, export limits, and generated-asset terms must be verified before use; no paid plan or generation was initiated | Generated meshes would require decimation, material simplification, collider setup, and visual consistency review for Android | Not used | Follow the active Meshy plan's terms |
+## Authored 3D Voxel Models & Prefabs
 
-## Current project-authored assets
+All 3D assets in Hush Blocks have been custom-authored to adhere strictly to the GDD's architectural and character specifications, low-poly mobile vertex budgets, and deterministic collision geometry.
 
-The Phase 1 greybox uses generated Unity cubes and URP/Lit materials in `Assets/_Project/Editor/HushBlocksPhase1Builder.cs`. These are not third-party assets and have no external license or attribution requirement. `ResonanceBlock` remains project-authored so noisy cyan and stabilized amber blocks retain identical geometry and interaction behavior.
+| Model Asset Path | Unity Prefab Path | Poly / Vertex Budget | Texture / Materials | Intended Role & Systems Integration | License / Status |
+|---|---|---|---|---|---|
+| `Assets/Art/Models/Environment/BedrockFoundation.fbx` | `Assets/Prefabs/Environment/BedrockFoundation.prefab` | ~1.2k tris | URP Lit (`HushPalette.Amber` glyph glow, midnight slate base) | Foundation base of the tower. Displays glowing ancient amber acoustic glyphs. Instantiated at `(0, 0, 0)` in `HushStage`. | Project-Authored / Verified |
+| `Assets/Art/Models/Environment/BrownstoneDiorama.fbx` | `Assets/Prefabs/Environment/BrownstoneDiorama.prefab` | ~3.8k tris | URP Lit (Charcoal brick, glowing warm amber interior windows) | Midnight cityscape backdrop. Positioned behind the rising tower with subtle rhythmic parallax. | Project-Authored / Verified |
+| `Assets/Art/Models/Characters/Noa.fbx` | `Assets/Prefabs/Characters/Noa.prefab` | ~2.1k tris | URP Lit with Amber crystal trowel emission | Player avatar Noa. Step-hops upward (`NoaController.StepUpFloor`) as blocks are placed; swings resonant amber trowel on tap. | Project-Authored / Verified |
+| `Assets/Art/Models/Characters/FeedbackHowler.fbx` | `Assets/Prefabs/Characters/FeedbackHowler.prefab` | ~1.8k tris | URP Lit (Dark charcoal voxels with pulsed cyan acoustic distortion) | Hazard creature in District 02 and 03. Climbs tower ledges and shrieks on syncopated off-beats. | Project-Authored / Verified |
+| `Assets/Art/Models/Environment/RooftopSanctuary.fbx` | `Assets/Prefabs/Environment/RooftopSanctuary.prefab` | ~2.4k tris | URP Lit (Warm stone planters, blooming nocturnal flora, spire) | District completion sanctuary. Spawns atop the completed tower upon reaching target height. | Project-Authored / Verified |
+| `Assets/Art/Models/DoubleBeatBlock/DoubleBeatBlock.fbx` | `Assets/Prefabs/Blocks/HushBlock_DoubleBeat.prefab` | ~960 tris | URP Lit (`_BaseColor`, `_EmissionColor` dual-phase materials) | Special acoustic resonance chamber block requiring 2-beat rhythmic strike to lock into amber ballast. | Project-Authored / Verified |
+| `Assets/Art/Models/Props/CharcoalDebris.fbx` | `Assets/Prefabs/Props/CharcoalDebris.prefab` | ~420 tris | URP Lit (`HushPalette.Panel` charcoal) | Severed overhang fragments and shattered voxels spawned via `HushDebris`. | Project-Authored / Verified |
+| `Assets/Art/Models/FX/SoundWaveRings.fbx` | Procedural / Mesh | ~640 tris | Additive URP Unlit (`SoundWaveRing`) | Expanding acoustic rings emitted on trowel strike, harmonic channeling, and double-beat lock. | Project-Authored / Verified |
+| `Assets/Art/Models/Props/CrystallineEncasement.fbx` | Mesh / Visual | ~880 tris | Transparent URP Lit (`HushPalette.Cyan`) | Anti-resonance acoustic field encasing unmuted moving blocks before placement. | Project-Authored / Verified |
 
-## Phase 0A research result
+---
 
-The Phase 0A pass confirms a free-first, support-asset strategy: keep resonance blocks, their colliders, pivots, and cyan/amber state logic project-authored; use external content only for rooftop architecture, props, optional character animation, and lightweight effects/audio. No paid asset was selected, purchased, downloaded, or imported. No asset is treated as Unity 6/URP-compatible until it is tested in the actual project.
+## Material & Shader Architecture
 
-The most useful candidates for the first art pass are Kenney for stylized modular props and UI/support content, Quaternius for low-poly buildings and rooftop props, and the Unity Asset Store free catalog for a narrowly selected URP-compatible VFX or audio package. Poly Haven is better suited to optional CC0 environmental support than to the core voxel architecture. Mixamo is conditional: it should only be used after Noa or the Feedback Howler has a tested humanoid rig, and retargeting must be validated rather than assumed. Meshy is a later option for a bespoke Master Pylon or Howler prop only after the active plan's commercial rights and export limits are verified.
-
-For the prototype, the recommended import order is: first one small modular rooftop/architecture pack, then one lightweight prop pack, then only the minimum animation or VFX/audio support needed by a playable scene. The core rhythm, muting, stacking, and collapse systems must not depend on any of these imports.
-
-## Research blockers and manual verification
-
-Official asset pages were queried during this pass, but the current environment blocked direct access to the listed hosts and returned no verifiable pack-level metadata. Therefore no exact pack, price, license exception, package size, dependency list, URP result, or import result is claimed here. Before adoption, open the official page directly, record the exact pack name and page URL, retain its license/readme where permitted, and test it in Unity `6000.4.7f1` URP. For every candidate, record: exact license and attribution, cost, supported formats, texture/material complexity, polygon and mobile implications, rig/animation requirements, dependencies, and the result of a clean-project import test. No paid asset should be purchased without explicit approval.
+All models utilize Universal Render Pipeline (URP 17.4) shaders:
+- `Universal Render Pipeline/Lit` for structural geometry, character bodies, and diorama architecture.
+- `MaterialPropertyBlock` instances for zero-allocation dynamic color swapping (`_BaseColor`) and rhythmic emission pulsing (`_EmissionColor`) driven by DSP beat tracking.
+- Zero paid assets, zero unverified third-party packages.

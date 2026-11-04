@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace HushBlocks.FullGame
@@ -128,8 +129,13 @@ namespace HushBlocks.FullGame
         private TextMeshProUGUI version;
         private HushButton play;
         private HushButton districts;
+        private HushButton howTo;
+        private HushButton settings;
+        private HushButton quit;
         private Image[] bars;
         private RectTransform[] barRects;
+        private RectTransform contentRect;
+        private RectTransform scrimRect;
 
         public TitleScreen(HushGame game) : base(game) { }
 
@@ -141,56 +147,57 @@ namespace HushBlocks.FullGame
             scrim.rectTransform.anchorMax = new Vector2(0f, 1f);
             scrim.rectTransform.offsetMin = new Vector2(0f, 0f);
             scrim.rectTransform.offsetMax = new Vector2(1320f, 0f);
+            scrimRect = scrim.rectTransform;
 
-            var content = HushLayout.Place(HushUI.NewRect(Root, "Title Content"), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+            contentRect = HushLayout.Place(HushUI.NewRect(Root, "Title Content"), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
                 new Vector2(138f, 0f), new Vector2(780f, 940f));
 
-            HushLayout.Image(content, "Logo Glow", HushArt.Glow, HushPalette.WithAlpha(HushPalette.Cyan, 0.10f),
+            HushLayout.Image(contentRect, "Logo Glow", HushArt.Glow, HushPalette.WithAlpha(HushPalette.Cyan, 0.10f),
                 new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(120f, 280f), new Vector2(620f, 300f));
 
-            HushLayout.Text(content, "Wordmark A", "HUSH", 158f, HushPalette.Text, TextAlignmentOptions.Left, true,
-                new Vector2(0f, 1f), new Vector2(-4f, -80f), new Vector2(700f, 190f), false, 12f);
-            HushLayout.Text(content, "Wordmark B", "BLOCKS", 158f, HushPalette.Amber, TextAlignmentOptions.Left, true,
-                new Vector2(0f, 1f), new Vector2(-4f, -210f), new Vector2(700f, 190f), false, 12f);
+            HushLayout.Text(contentRect, "Wordmark A", "HUSH", 140f, HushPalette.Text, TextAlignmentOptions.Left, true,
+                new Vector2(0f, 1f), new Vector2(-4f, -70f), new Vector2(700f, 150f), false, 12f);
+            HushLayout.Text(contentRect, "Wordmark B", "BLOCKS", 140f, HushPalette.Amber, TextAlignmentOptions.Left, true,
+                new Vector2(0f, 1f), new Vector2(-4f, -190f), new Vector2(700f, 150f), false, 12f);
 
-            var line = HushLayout.Image(content, "Line", HushArt.RoundedSmall, HushPalette.Cyan,
-                new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(0f, -300f), new Vector2(82f, 3f));
+            var line = HushLayout.Image(contentRect, "Line", HushArt.RoundedSmall, HushPalette.Cyan,
+                new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(0f, -270f), new Vector2(82f, 3f));
             line.type = Image.Type.Sliced;
-            HushLayout.Text(content, "Tagline", "A RHYTHM STACKING NOCTURNE", 17f, HushPalette.Muted, TextAlignmentOptions.Left, false,
-                new Vector2(0f, 1f), new Vector2(0f, -328f), new Vector2(620f, 32f), false, 5f);
+            HushLayout.Text(contentRect, "Tagline", "A RHYTHM STACKING NOCTURNE", 16f, HushPalette.Muted, TextAlignmentOptions.Left, false,
+                new Vector2(0f, 1f), new Vector2(0f, -298f), new Vector2(620f, 30f), false, 5f);
 
             // Beat equalizer - procedural, driven by the menu loop.
             bars = new Image[9];
             barRects = new RectTransform[bars.Length];
             for (int i = 0; i < bars.Length; i++)
             {
-                var bar = HushLayout.Image(content, "Eq " + i, HushArt.RoundedSmall,
+                var bar = HushLayout.Image(contentRect, "Eq " + i, HushArt.RoundedSmall,
                     i % 3 == 0 ? HushPalette.Amber : HushPalette.Cyan,
                     new Vector2(0f, 1f), new Vector2(0f, 0f),
-                    new Vector2(i * 14f, -432f), new Vector2(7f, 18f));
+                    new Vector2(i * 14f, -345f), new Vector2(7f, 18f));
                 bar.type = Image.Type.Sliced;
                 bar.color = new Color(bar.color.r, bar.color.g, bar.color.b, 0.7f);
                 bars[i] = bar;
                 barRects[i] = bar.rectTransform;
             }
 
-            play = MakeButton(content, "PLAY", new Vector2(0f, -18f), new Vector2(368f, 74f), HushButton.Style.Primary, 28f);
+            play = MakeButton(contentRect, "PLAY", new Vector2(0f, -415f), new Vector2(368f, 68f), HushButton.Style.Primary, 26f);
             play.Clicked = () => Game.Play();
 
-            districts = MakeButton(content, "DISTRICTS", new Vector2(0f, -108f), new Vector2(368f, 64f), HushButton.Style.Secondary);
+            districts = MakeButton(contentRect, "DISTRICTS", new Vector2(0f, -485f), new Vector2(368f, 58f), HushButton.Style.Secondary, 21f);
             districts.Clicked = () => Game.OpenDistrictSelect();
 
-            var howTo = MakeButton(content, "HOW TO PLAY", new Vector2(0f, -188f), new Vector2(368f, 64f), HushButton.Style.Secondary);
+            howTo = MakeButton(contentRect, "HOW TO PLAY", new Vector2(0f, -550f), new Vector2(368f, 58f), HushButton.Style.Secondary, 21f);
             howTo.Clicked = () => Game.OpenHowTo(HushReturnTarget.Title);
 
-            var settings = MakeButton(content, "SETTINGS", new Vector2(0f, -268f), new Vector2(368f, 58f), HushButton.Style.Ghost);
+            settings = MakeButton(contentRect, "SETTINGS", new Vector2(0f, -615f), new Vector2(368f, 54f), HushButton.Style.Ghost, 19f);
             settings.Clicked = () => Game.OpenSettings(HushReturnTarget.Title);
 
-            stats = HushLayout.Text(content, "Stats", string.Empty, 16f, HushPalette.Muted, TextAlignmentOptions.Left, false,
-                new Vector2(0f, 0f), new Vector2(0f, 78f), new Vector2(640f, 40f), false, 2f);
-
-            var quit = MakeButton(content, "QUIT", new Vector2(0f, 20f), new Vector2(180f, 44f), HushButton.Style.Ghost, 17f);
+            quit = MakeButton(contentRect, "QUIT", new Vector2(0f, -680f), new Vector2(200f, 48f), HushButton.Style.Ghost, 17f);
             quit.Clicked = () => Game.QuitGame();
+
+            stats = HushLayout.Text(contentRect, "Stats", string.Empty, 15f, HushPalette.Muted, TextAlignmentOptions.Left, false,
+                new Vector2(0f, 0f), new Vector2(0f, 40f), new Vector2(700f, 32f), false, 2f);
 
             version = HushLayout.Text(Root, "Version", "v1.0.0  ·  PROCEDURAL EDITION", 13f, HushPalette.WithAlpha(HushPalette.Muted, 0.7f),
                 TextAlignmentOptions.Right, false, new Vector2(1f, 0f), new Vector2(-40f, 26f), new Vector2(700f, 30f), false, 2f);
@@ -207,6 +214,10 @@ namespace HushBlocks.FullGame
         {
             base.Show(instant);
             Refresh();
+            if (play != null && EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(play.gameObject);
+            }
         }
 
         private void Refresh()
@@ -234,6 +245,29 @@ namespace HushBlocks.FullGame
                 var color = bars[i].color;
                 color.a = 0.45f + Mathf.Abs(Mathf.Sin(phase)) * 0.45f;
                 bars[i].color = color;
+            }
+
+            // Responsive positioning for portrait and narrow screens
+            if (contentRect != null)
+            {
+                bool isPortrait = (float)Screen.width / Mathf.Max(1, Screen.height) < 1.25f;
+                if (isPortrait)
+                {
+                    contentRect.anchorMin = new Vector2(0.5f, 0.5f);
+                    contentRect.anchorMax = new Vector2(0.5f, 0.5f);
+                    contentRect.pivot = new Vector2(0.5f, 0.5f);
+                    contentRect.anchoredPosition = Vector2.zero;
+                    float scale = Mathf.Min(1f, (Screen.width - 40f) / 780f);
+                    contentRect.localScale = new Vector3(scale, scale, 1f);
+                }
+                else
+                {
+                    contentRect.anchorMin = new Vector2(0f, 0.5f);
+                    contentRect.anchorMax = new Vector2(0f, 0.5f);
+                    contentRect.pivot = new Vector2(0f, 0.5f);
+                    contentRect.anchoredPosition = new Vector2(138f, 0f);
+                    contentRect.localScale = Vector3.one;
+                }
             }
         }
     }
@@ -312,6 +346,7 @@ namespace HushBlocks.FullGame
     {
         private sealed class Card
         {
+            public RectTransform Root;
             public CanvasGroup Group;
             public Image Border;
             public TextMeshProUGUI Badge;
@@ -327,6 +362,12 @@ namespace HushBlocks.FullGame
         private readonly Card[] cards = new Card[DistrictCatalog.Count];
         private TextMeshProUGUI starTotal;
         private TextMeshProUGUI subtitle;
+        private HushButton prevButton;
+        private HushButton nextButton;
+        private Image[] pageDots;
+        private int activeCardIndex;
+        private Vector2 touchStartPos;
+        private bool isSwiping;
 
         public DistrictSelectScreen(HushGame game) : base(game) { }
 
@@ -350,6 +391,21 @@ namespace HushBlocks.FullGame
                 cards[i] = BuildCard(i);
             }
 
+            prevButton = HushUI.Button(Root, "<", new Vector2(56f, 56f), HushButton.Style.Secondary, 26f);
+            HushLayout.Place((RectTransform)prevButton.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(36f, -36f), new Vector2(56f, 56f));
+            prevButton.Clicked = () => CycleCard(-1);
+
+            nextButton = HushUI.Button(Root, ">", new Vector2(56f, 56f), HushButton.Style.Secondary, 26f);
+            HushLayout.Place((RectTransform)nextButton.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-36f, -36f), new Vector2(56f, 56f));
+            nextButton.Clicked = () => CycleCard(1);
+
+            pageDots = new Image[DistrictCatalog.Count];
+            for (int i = 0; i < DistrictCatalog.Count; i++)
+            {
+                pageDots[i] = HushLayout.Image(Root, "Dot " + i, HushArt.Circle, HushPalette.Border,
+                    new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-24f + i * 24f, 82f), new Vector2(10f, 10f));
+            }
+
             HushLayout.Text(Root, "Footer", "CLEAR A DISTRICT TO UNLOCK THE NEXT ROOFTOP", 13f, HushPalette.WithAlpha(HushPalette.Muted, 0.75f),
                 TextAlignmentOptions.Center, false, new Vector2(0.5f, 0f), new Vector2(0f, 46f), new Vector2(1000f, 30f), false, 3f);
         }
@@ -361,6 +417,7 @@ namespace HushBlocks.FullGame
             float x = index == 0 ? -470f : index == 1 ? 0f : 470f;
             var root = HushLayout.Place(HushUI.NewRect(Root, "Card " + index), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                 new Vector2(x, -36f), new Vector2(430f, 580f));
+            card.Root = root;
             card.Group = root.gameObject.AddComponent<CanvasGroup>();
 
             var panel = HushUI.Panel(root, "Panel", HushPalette.WithAlpha(HushPalette.Panel, 0.94f), HushPalette.Border, 2f, true, definition.Accent);
@@ -409,7 +466,92 @@ namespace HushBlocks.FullGame
         public override void Show(bool instant = false)
         {
             base.Show(instant);
+            activeCardIndex = Mathf.Clamp(HushProgress.NextDistrict, 0, DistrictCatalog.Count - 1);
             Refresh();
+            if (activeCardIndex >= 0 && activeCardIndex < cards.Length && cards[activeCardIndex].Enter != null && EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(cards[activeCardIndex].Enter.gameObject);
+            }
+        }
+
+        private void CycleCard(int delta)
+        {
+            int target = Mathf.Clamp(activeCardIndex + delta, 0, DistrictCatalog.Count - 1);
+            if (target != activeCardIndex)
+            {
+                activeCardIndex = target;
+                HushAudio.Sfx(HushAudio.SfxId.UiClick, 0.6f);
+                if (EventSystem.current != null && cards[activeCardIndex].Enter != null)
+                {
+                    EventSystem.current.SetSelectedGameObject(cards[activeCardIndex].Enter.gameObject);
+                }
+            }
+        }
+
+        public override void Tick()
+        {
+            float dt = Time.unscaledDeltaTime;
+            bool isPortrait = (float)Screen.width / Mathf.Max(1, Screen.height) < 1.35f;
+
+            if (prevButton != null)
+            {
+                prevButton.gameObject.SetActive(isPortrait);
+                prevButton.SetInteractable(activeCardIndex > 0);
+            }
+            if (nextButton != null)
+            {
+                nextButton.gameObject.SetActive(isPortrait);
+                nextButton.SetInteractable(activeCardIndex < DistrictCatalog.Count - 1);
+            }
+
+            for (int i = 0; i < pageDots.Length; i++)
+            {
+                if (pageDots[i] != null)
+                {
+                    pageDots[i].gameObject.SetActive(isPortrait);
+                    pageDots[i].color = i == activeCardIndex ? HushPalette.Amber : HushPalette.Border;
+                    pageDots[i].rectTransform.localScale = Vector3.one * (i == activeCardIndex ? 1.35f : 1f);
+                }
+            }
+
+            for (int i = 0; i < cards.Length; i++)
+            {
+                if (cards[i] == null || cards[i].Root == null) continue;
+                bool unlocked = HushProgress.IsUnlocked(i);
+
+                float targetX = isPortrait ? (i - activeCardIndex) * 460f : (i == 0 ? -470f : i == 1 ? 0f : 470f);
+                float curX = cards[i].Root.anchoredPosition.x;
+                float newX = Mathf.Lerp(curX, targetX, 1f - Mathf.Exp(-14f * dt));
+                cards[i].Root.anchoredPosition = new Vector2(newX, -36f);
+
+                float targetAlpha = isPortrait
+                    ? (i == activeCardIndex ? (unlocked ? 1f : 0.42f) : 0.22f)
+                    : (unlocked ? 1f : 0.42f);
+                cards[i].Group.alpha = Mathf.Lerp(cards[i].Group.alpha, targetAlpha, 1f - Mathf.Exp(-14f * dt));
+                cards[i].Group.blocksRaycasts = !isPortrait || i == activeCardIndex;
+            }
+
+            if (isPortrait)
+            {
+                if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) CycleCard(-1);
+                if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) CycleCard(1);
+
+                if (Input.GetMouseButtonDown(0))
+                {
+                    touchStartPos = Input.mousePosition;
+                    isSwiping = true;
+                }
+                else if (Input.GetMouseButtonUp(0) && isSwiping)
+                {
+                    isSwiping = false;
+                    float deltaX = Input.mousePosition.x - touchStartPos.x;
+                    if (Mathf.Abs(deltaX) > 60f)
+                    {
+                        if (deltaX < 0) CycleCard(1);
+                        else CycleCard(-1);
+                    }
+                }
+            }
         }
 
         private void Refresh()
@@ -520,15 +662,20 @@ namespace HushBlocks.FullGame
             }
 
             HushLayout.Text(column, "Title", title, 28f, HushPalette.Text, TextAlignmentOptions.Center, true,
-                new Vector2(0.5f, 1f), new Vector2(0f, -220f), new Vector2(320f, 40f), false, 3f);
+                new Vector2(0.5f, 1f), new Vector2(0f, -195f), new Vector2(320f, 36f), false, 3f);
             var bodyText = HushLayout.Text(column, "Body", body, 17f, HushPalette.Muted, TextAlignmentOptions.Center, false,
-                new Vector2(0.5f, 1f), new Vector2(0f, -250f), new Vector2(300f, 110f), true, 0f);
-            bodyText.lineSpacing = 8f;
+                new Vector2(0.5f, 1f), new Vector2(0f, -275f), new Vector2(310f, 110f), true, 0f);
+            bodyText.lineSpacing = 6f;
         }
 
         public override void Show(bool instant = false)
         {
             base.Show(instant);
+            if (EventSystem.current != null)
+            {
+                var gotIt = Root.GetComponentInChildren<HushButton>();
+                if (gotIt != null) EventSystem.current.SetSelectedGameObject(gotIt.gameObject);
+            }
         }
 
         public override void Tick()
@@ -556,6 +703,7 @@ namespace HushBlocks.FullGame
         private HushToggle shakeToggle;
         private HushToggle motionToggle;
         private HushButton resetButton;
+        private HushButton backButton;
         private TextMeshProUGUI statusLine;
         private float resetArmedUntil;
         private float statusUntil;
@@ -569,15 +717,17 @@ namespace HushBlocks.FullGame
             HushLayout.Place(panel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 820f));
 
             HushLayout.Text(panel, "Header", "SETTINGS", 48f, HushPalette.Text, TextAlignmentOptions.Center, true,
-                new Vector2(0.5f, 1f), new Vector2(0f, -48f), new Vector2(700f, 70f), false, 4f);
+                new Vector2(0.5f, 1f), new Vector2(0f, -46f), new Vector2(700f, 50f), false, 4f);
             HushLayout.Text(panel, "Sub", "TUNE THE ROOM, NOT THE RHYTHM", 13f, HushPalette.Muted, TextAlignmentOptions.Center, false,
-                new Vector2(0.5f, 1f), new Vector2(0f, -88f), new Vector2(700f, 28f), false, 4f);
+                new Vector2(0.5f, 1f), new Vector2(0f, -84f), new Vector2(700f, 24f), false, 4f);
 
-            masterValue = BuildVolumeRow(panel, "MASTER", -150f, AdjustMaster);
-            musicValue = BuildVolumeRow(panel, "MUSIC", -216f, AdjustMusic);
-            sfxValue = BuildVolumeRow(panel, "SOUND EFFECTS", -282f, AdjustSfx);
+            BuildRule(panel, -112f);
 
-            BuildRule(panel, -324f);
+            masterValue = BuildVolumeRow(panel, "MASTER", -148f, AdjustMaster);
+            musicValue = BuildVolumeRow(panel, "MUSIC", -202f, AdjustMusic);
+            sfxValue = BuildVolumeRow(panel, "SOUND EFFECTS", -256f, AdjustSfx);
+
+            BuildRule(panel, -295f);
 
             clickToggle = HushUI.Toggle(panel, "BEAT CLICKS", HushProgress.Data.beatClicks, value =>
             {
@@ -585,53 +735,53 @@ namespace HushBlocks.FullGame
                 HushProgress.NotifyChanged();
                 HushAudio.ApplyVolumes();
             });
-            HushLayout.Place((RectTransform)clickToggle.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -90f), new Vector2(660f, 58f));
+            HushLayout.Place(clickToggle.RowRect, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -336f), new Vector2(660f, 48f));
 
             shakeToggle = HushUI.Toggle(panel, "SCREEN SHAKE", HushProgress.Data.screenShake, value =>
             {
                 HushProgress.Data.screenShake = value;
                 HushProgress.NotifyChanged();
             });
-            HushLayout.Place((RectTransform)shakeToggle.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -152f), new Vector2(660f, 58f));
+            HushLayout.Place(shakeToggle.RowRect, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -394f), new Vector2(660f, 48f));
 
             motionToggle = HushUI.Toggle(panel, "REDUCED MOTION", HushProgress.Data.reducedMotion, value =>
             {
                 HushProgress.Data.reducedMotion = value;
                 HushProgress.NotifyChanged();
             });
-            HushLayout.Place((RectTransform)motionToggle.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -214f), new Vector2(660f, 58f));
+            HushLayout.Place(motionToggle.RowRect, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -452f), new Vector2(660f, 48f));
 
-            BuildRule(panel, -256f);
+            BuildRule(panel, -495f);
 
-            resetButton = HushUI.Button(panel, "RESET PROGRESS", new Vector2(320f, 54f), HushButton.Style.Danger, 19f);
-            HushLayout.Place((RectTransform)resetButton.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -300f), new Vector2(320f, 54f));
+            resetButton = HushUI.Button(panel, "RESET PROGRESS", new Vector2(320f, 52f), HushButton.Style.Danger, 19f);
+            HushLayout.Place((RectTransform)resetButton.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -545f), new Vector2(320f, 52f));
             resetButton.Clicked = OnResetPressed;
 
             statusLine = HushLayout.Text(panel, "Status", string.Empty, 14f, HushPalette.Amber, TextAlignmentOptions.Center, false,
-                new Vector2(0.5f, 0f), new Vector2(0f, 118f), new Vector2(760f, 28f), false, 2f);
+                new Vector2(0.5f, 1f), new Vector2(0f, -605f), new Vector2(760f, 28f), false, 2f);
 
-            var back = HushUI.Button(panel, "BACK", new Vector2(240f, 58f), HushButton.Style.Secondary, 21f);
-            HushLayout.Place((RectTransform)back.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 54f), new Vector2(240f, 58f));
-            back.Clicked = () => Game.CloseSettings();
+            backButton = HushUI.Button(panel, "BACK", new Vector2(240f, 54f), HushButton.Style.Secondary, 21f);
+            HushLayout.Place((RectTransform)backButton.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 44f), new Vector2(240f, 54f));
+            backButton.Clicked = () => Game.CloseSettings();
         }
 
         private TextMeshProUGUI BuildVolumeRow(Transform panel, string label, float y, Action<float> adjust)
         {
-            var row = HushLayout.Place(HushUI.NewRect(panel, "Row " + label), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0f, y), new Vector2(660f, 58f));
+            var row = HushLayout.Place(HushUI.NewRect(panel, "Row " + label), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, y), new Vector2(660f, 48f));
 
             HushLayout.Text(row, "Label", label, 20f, HushPalette.Text, TextAlignmentOptions.Left, false,
-                new Vector2(0f, 0.5f), new Vector2(4f, 0f), new Vector2(360f, 58f), false, 2f);
+                new Vector2(0f, 0.5f), new Vector2(4f, 0f), new Vector2(360f, 48f), false, 2f);
 
-            var minus = HushUI.Button(row, "-", new Vector2(44f, 44f), HushButton.Style.Icon, 24f);
-            HushLayout.Place((RectTransform)minus.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-190f, 0f), new Vector2(44f, 44f));
+            var minus = HushUI.Button(row, "-", new Vector2(48f, 48f), HushButton.Style.Icon, 24f);
+            HushLayout.Place((RectTransform)minus.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-190f, 0f), new Vector2(48f, 48f));
             minus.Clicked = () => adjust(-0.05f);
 
             var value = HushLayout.Text(row, "Value", "0%", 20f, HushPalette.Amber, TextAlignmentOptions.Center, false,
                 new Vector2(1f, 0.5f), new Vector2(-94f, 0f), new Vector2(86f, 40f), false, 0f);
 
-            var plus = HushUI.Button(row, "+", new Vector2(44f, 44f), HushButton.Style.Icon, 24f);
-            HushLayout.Place((RectTransform)plus.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 0f), new Vector2(44f, 44f));
+            var plus = HushUI.Button(row, "+", new Vector2(48f, 48f), HushButton.Style.Icon, 24f);
+            HushLayout.Place((RectTransform)plus.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 0f), new Vector2(48f, 48f));
             plus.Clicked = () => adjust(0.05f);
 
             return value;
@@ -640,7 +790,7 @@ namespace HushBlocks.FullGame
         private static void BuildRule(Transform panel, float y)
         {
             var rule = HushLayout.Image(panel, "Rule " + y, HushArt.RoundedSmall, HushPalette.WithAlpha(HushPalette.Border, 0.8f),
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, y), new Vector2(800f, 1f));
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, y), new Vector2(800f, 1f));
             rule.type = Image.Type.Sliced;
         }
 
@@ -799,15 +949,15 @@ namespace HushBlocks.FullGame
 
             // Score and hearts.
             HushLayout.Text(Root, "Score Cap", "SCORE", 13f, HushPalette.Muted, TextAlignmentOptions.Right, false,
-                new Vector2(1f, 1f), new Vector2(-44f, -40f), new Vector2(260f, 24f), false, 4f);
-            scoreLabel = HushLayout.Text(Root, "Score", "0", 58f, HushPalette.Text, TextAlignmentOptions.Right, true,
-                new Vector2(1f, 1f), new Vector2(-44f, -68f), new Vector2(360f, 74f), false, 1f);
+                new Vector2(1f, 1f), new Vector2(-44f, -28f), new Vector2(260f, 20f), false, 4f);
+            scoreLabel = HushLayout.Text(Root, "Score", "0", 56f, HushPalette.Text, TextAlignmentOptions.Right, true,
+                new Vector2(1f, 1f), new Vector2(-44f, -72f), new Vector2(360f, 56f), false, 1f);
             scoreRect = scoreLabel.rectTransform;
             hearts = new Image[3];
             for (int i = 0; i < 3; i++)
             {
                 hearts[i] = HushLayout.Image(Root, "Heart " + i, HushArt.Heart, HushPalette.Amber,
-                    new Vector2(1f, 1f), new Vector2(1f, 0.5f), new Vector2(-44f - (2 - i) * 38f, -128f), new Vector2(28f, 28f));
+                    new Vector2(1f, 1f), new Vector2(1f, 0.5f), new Vector2(-44f - (2 - i) * 38f, -122f), new Vector2(28f, 28f));
             }
 
             // Objective and altitude gauge.
@@ -1095,13 +1245,13 @@ namespace HushBlocks.FullGame
             stats = HushLayout.Text(panel, "Stats", string.Empty, 16f, HushPalette.Muted, TextAlignmentOptions.Center, false,
                 new Vector2(0.5f, 1f), new Vector2(0f, -132f), new Vector2(500f, 30f), false, 2f);
 
-            var resume = Button(panel, "RESUME", 64f, HushButton.Style.Primary, 22f);
+            var resume = Button(panel, "RESUME", 56f, HushButton.Style.Primary, 22f);
             resume.Clicked = () => Game.Resume();
-            var restart = Button(panel, "RESTART DISTRICT", 42f, HushButton.Style.Secondary, 20f);
+            var restart = Button(panel, "RESTART DISTRICT", -16f, HushButton.Style.Secondary, 20f);
             restart.Clicked = () => Game.RestartDistrict();
-            var settings = Button(panel, "SETTINGS", -34f, HushButton.Style.Ghost, 19f);
+            var settings = Button(panel, "SETTINGS", -88f, HushButton.Style.Ghost, 19f);
             settings.Clicked = () => Game.OpenSettings(HushReturnTarget.Pause);
-            var menu = Button(panel, "QUIT TO DISTRICT SELECT", -100f, HushButton.Style.Danger, 17f);
+            var menu = Button(panel, "QUIT TO DISTRICT SELECT", -160f, HushButton.Style.Danger, 17f);
             menu.Clicked = () => Game.OpenDistrictSelect();
 
             HushLayout.Text(panel, "Escape", "ESC  —  RESUME", 12f, HushPalette.WithAlpha(HushPalette.Muted, 0.7f), TextAlignmentOptions.Center, false,
@@ -1123,6 +1273,11 @@ namespace HushBlocks.FullGame
             {
                 stats.text = $"{run.District.Name.ToUpperInvariant()}   ·   FLOOR {run.Floors:00} / {run.TargetFloors:00}   ·   SCORE {run.Score:N0}";
                 caption.text = "THE CITY HOLDS ITS BREATH";
+            }
+            if (EventSystem.current != null)
+            {
+                var first = Root.GetComponentInChildren<HushButton>();
+                if (first != null) EventSystem.current.SetSelectedGameObject(first.gameObject);
             }
         }
     }
@@ -1167,41 +1322,40 @@ namespace HushBlocks.FullGame
             for (int i = 0; i < 3; i++)
             {
                 stars[i] = HushLayout.Image(panel, "Star " + i, HushArt.Star, HushPalette.Border,
-                    new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-108f + i * 108f, -172f), new Vector2(82f, 82f));
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-108f + i * 108f, -150f), new Vector2(80f, 80f));
             }
 
-            score = HushLayout.Text(panel, "Score", "0", 84f, HushPalette.Text, TextAlignmentOptions.Center, true,
-                new Vector2(0.5f, 1f), new Vector2(0f, -266f), new Vector2(700f, 100f), false, 2f);
-            newBest = HushLayout.Text(panel, "New Best", "NEW BEST", 12f, HushPalette.Amber, TextAlignmentOptions.Center, false,
-                new Vector2(0.5f, 1f), new Vector2(0f, -318f), new Vector2(500f, 24f), false, 5f);
+            score = HushLayout.Text(panel, "Score", "0", 72f, HushPalette.Text, TextAlignmentOptions.Center, true,
+                new Vector2(0.5f, 1f), new Vector2(0f, -232f), new Vector2(700f, 72f), false, 2f);
+            newBest = HushLayout.Text(panel, "New Best", "NEW BEST", 13f, HushPalette.Amber, TextAlignmentOptions.Center, false,
+                new Vector2(0.5f, 1f), new Vector2(0f, -284f), new Vector2(500f, 24f), false, 5f);
 
-            statFloors = BuildStat(panel, "FLOORS", -330f, -372f);
-            statAccuracy = BuildStat(panel, "ACCURACY", -60f, -372f);
-            statPerfect = BuildStat(panel, "PERFECT", 210f, -372f);
-            statCombo = BuildStat(panel, "MAX COMBO", 380f, -372f);
-            // Re-place the first two stats around the center for a balanced row.
-            HushLayout.Place(statFloors.transform.parent as RectTransform ?? statFloors.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-330f, -372f), new Vector2(200f, 80f));
-            HushLayout.Place(statAccuracy.transform.parent as RectTransform ?? statAccuracy.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-110f, -372f), new Vector2(200f, 80f));
-            HushLayout.Place(statPerfect.transform.parent as RectTransform ?? statPerfect.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(110f, -372f), new Vector2(200f, 80f));
-            HushLayout.Place(statCombo.transform.parent as RectTransform ?? statCombo.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(330f, -372f), new Vector2(200f, 80f));
+            statFloors = BuildStat(panel, "FLOORS", -330f, -345f);
+            statAccuracy = BuildStat(panel, "ACCURACY", -110f, -345f);
+            statPerfect = BuildStat(panel, "PERFECT", 110f, -345f);
+            statCombo = BuildStat(panel, "MAX COMBO", 330f, -345f);
+            HushLayout.Place(statFloors.transform.parent as RectTransform ?? statFloors.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-330f, -345f), new Vector2(200f, 80f));
+            HushLayout.Place(statAccuracy.transform.parent as RectTransform ?? statAccuracy.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-110f, -345f), new Vector2(200f, 80f));
+            HushLayout.Place(statPerfect.transform.parent as RectTransform ?? statPerfect.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(110f, -345f), new Vector2(200f, 80f));
+            HushLayout.Place(statCombo.transform.parent as RectTransform ?? statCombo.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(330f, -345f), new Vector2(200f, 80f));
 
-            best = HushLayout.Text(panel, "Best", "BEST 0", 13f, HushPalette.Muted, TextAlignmentOptions.Center, false,
-                new Vector2(0.5f, 1f), new Vector2(0f, -430f), new Vector2(600f, 24f), false, 3f);
+            best = HushLayout.Text(panel, "Best", "BEST 0", 14f, HushPalette.Muted, TextAlignmentOptions.Center, false,
+                new Vector2(0.5f, 1f), new Vector2(0f, -408f), new Vector2(600f, 24f), false, 3f);
 
-            primary = HushUI.Button(panel, "NEXT DISTRICT", new Vector2(380f, 66f), HushButton.Style.Primary, 22f);
-            HushLayout.Place((RectTransform)primary.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 218f), new Vector2(380f, 66f));
+            primary = HushUI.Button(panel, "NEXT DISTRICT", new Vector2(380f, 62f), HushButton.Style.Primary, 22f);
+            HushLayout.Place((RectTransform)primary.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 216f), new Vector2(380f, 62f));
             primary.Clicked = () => Game.AdvanceAfterResults();
 
-            secondary = HushUI.Button(panel, "RETRY", new Vector2(300f, 56f), HushButton.Style.Secondary, 19f);
-            HushLayout.Place((RectTransform)secondary.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 150f), new Vector2(300f, 56f));
+            secondary = HushUI.Button(panel, "RETRY", new Vector2(300f, 54f), HushButton.Style.Secondary, 19f);
+            HushLayout.Place((RectTransform)secondary.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 146f), new Vector2(300f, 54f));
             secondary.Clicked = () => Game.RetryDistrict();
 
             tertiary = HushUI.Button(panel, "DISTRICT SELECT", new Vector2(280f, 48f), HushButton.Style.Ghost, 16f);
-            HushLayout.Place((RectTransform)tertiary.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 88f), new Vector2(280f, 48f));
+            HushLayout.Place((RectTransform)tertiary.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, 86f), new Vector2(280f, 48f));
             tertiary.Clicked = () => Game.OpenDistrictSelect();
 
             quaternary = HushUI.Button(panel, "TITLE", new Vector2(200f, 44f), HushButton.Style.Ghost, 15f);
-            HushLayout.Place((RectTransform)quaternary.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(200f, 44f));
+            HushLayout.Place((RectTransform)quaternary.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, 30f), new Vector2(200f, 44f));
             quaternary.Clicked = () => Game.OpenTitle();
         }
 
@@ -1270,6 +1424,11 @@ namespace HushBlocks.FullGame
             {
                 Game.StartCoroutine(RevealStars(instant));
             }
+            if (EventSystem.current != null)
+            {
+                var targetBtn = (primary != null && primary.gameObject.activeSelf && primary.IsInteractable) ? primary : secondary;
+                if (targetBtn != null) EventSystem.current.SetSelectedGameObject(targetBtn.gameObject);
+            }
         }
 
         private IEnumerator RevealStars(bool instant)
@@ -1323,32 +1482,32 @@ namespace HushBlocks.FullGame
                     new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(6f + (float)random.NextDouble() * 10f, 6f + (float)random.NextDouble() * 10f));
             }
 
-            HushLayout.Text(Root, "Kicker", "THE NIGHT HAS ENDED", 13f, HushPalette.Cyan, TextAlignmentOptions.Center, false,
-                new Vector2(0.5f, 0.5f), new Vector2(0f, 238f), new Vector2(900f, 30f), false, 6f);
-            HushLayout.Text(Root, "Title", "THE CITY\nSLEEPS", 118f, HushPalette.Amber, TextAlignmentOptions.Center, true,
-                new Vector2(0.5f, 0.5f), new Vector2(0f, 108f), new Vector2(1200f, 280f), false, 10f);
+            HushLayout.Text(Root, "Kicker", "THE NIGHT HAS ENDED", 14f, HushPalette.Cyan, TextAlignmentOptions.Center, false,
+                new Vector2(0.5f, 0.5f), new Vector2(0f, 260f), new Vector2(900f, 30f), false, 6f);
+            HushLayout.Text(Root, "Title", "THE CITY\nSLEEPS", 110f, HushPalette.Amber, TextAlignmentOptions.Center, true,
+                new Vector2(0.5f, 0.5f), new Vector2(0f, 110f), new Vector2(1200f, 260f), false, 10f);
 
             HushLayout.Text(Root, "Epilogue",
                 "Three rooftops stabilized. The resonance fades into the mortar.\nNoa sets down the trowel. For the first time in a long time, the city is quiet.",
-                20f, HushPalette.Muted, TextAlignmentOptions.Center, false,
-                new Vector2(0.5f, 0.5f), new Vector2(0f, -60f), new Vector2(1000f, 90f), true, 0f);
+                18f, HushPalette.Muted, TextAlignmentOptions.Center, false,
+                new Vector2(0.5f, 0.5f), new Vector2(0f, -40f), new Vector2(1000f, 70f), true, 0f);
 
             stars = new Image[3];
             for (int i = 0; i < 3; i++)
             {
                 stars[i] = HushLayout.Image(Root, "Final Star " + i, HushArt.Star, HushPalette.Amber,
-                    new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-56f + i * 56f, -136f), new Vector2(38f, 38f));
+                    new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-56f + i * 56f, -110f), new Vector2(38f, 38f));
             }
 
             stats = HushLayout.Text(Root, "Stats", string.Empty, 14f, HushPalette.Muted, TextAlignmentOptions.Center, false,
-                new Vector2(0.5f, 0.5f), new Vector2(0f, -190f), new Vector2(900f, 30f), false, 3f);
+                new Vector2(0.5f, 0.5f), new Vector2(0f, -165f), new Vector2(900f, 30f), false, 3f);
 
             var again = HushUI.Button(Root, "RETURN TO TITLE", new Vector2(360f, 64f), HushButton.Style.Primary, 22f);
-            HushLayout.Place((RectTransform)again.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -280f), new Vector2(360f, 64f));
+            HushLayout.Place((RectTransform)again.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -250f), new Vector2(360f, 64f));
             again.Clicked = () => Game.OpenTitle();
 
             var districts = HushUI.Button(Root, "DISTRICT SELECT", new Vector2(300f, 52f), HushButton.Style.Ghost, 17f);
-            HushLayout.Place((RectTransform)districts.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -350f), new Vector2(300f, 52f));
+            HushLayout.Place((RectTransform)districts.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -320f), new Vector2(300f, 52f));
             districts.Clicked = () => Game.OpenDistrictSelect();
 
             HushLayout.Text(Root, "Credit", "HUSH BLOCKS  ·  A PROCEDURAL NOCTURNE  ·  v1.0", 11f, HushPalette.WithAlpha(HushPalette.Muted, 0.55f),
@@ -1362,6 +1521,11 @@ namespace HushBlocks.FullGame
             stats.text =
                 $"{HushProgress.TotalStars} / {DistrictCatalog.Count * 3} STARS     ·     {save.totalFloors} LAYERS     ·     {save.totalPerfects} PERFECT     ·     {HushProgress.ClearedDistricts} / {DistrictCatalog.Count} DISTRICTS";
             for (int i = 0; i < stars.Length; i++) stars[i].rectTransform.localScale = Vector3.one * 1f;
+            if (EventSystem.current != null)
+            {
+                var again = Root.GetComponentInChildren<HushButton>();
+                if (again != null) EventSystem.current.SetSelectedGameObject(again.gameObject);
+            }
         }
     }
 

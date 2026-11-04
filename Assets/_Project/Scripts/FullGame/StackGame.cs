@@ -100,6 +100,13 @@ namespace HushBlocks.FullGame
         private float dropBeatOffset;
         private int lastIntroBeat = -1;
 
+        private enum DoubleBeatPhase { None, SealedWaitingConfirmation }
+        private DoubleBeatPhase doubleBeatPhase = DoubleBeatPhase.None;
+        private bool isDoubleBeatBlock;
+        private double doubleBeatDeadlineDsp;
+        private float dropXStored;
+        private bool willCenterStored;
+
         private int score;
         private int lives = StartingLives;
         private int floors;
@@ -130,10 +137,17 @@ namespace HushBlocks.FullGame
         public bool IsPaused => paused;
         public bool IntroActive => BeatSeconds < IntroBeats * beatDuration;
         public float TowerTopY => top.TopY;
-        public float Accuracy => floors <= 0 ? 0f : Mathf.Clamp01((perfects + goods) / (float)floors);
+        public float Accuracy => (floors + misses) <= 0 ? 0f : Mathf.Clamp01((float)(perfects + goods) / (floors + misses));
         public float BeatDuration => beatDuration;
         public int BeatIndex => beatDuration <= 0f ? 0 : Mathf.FloorToInt(BeatSeconds / beatDuration);
         public float RunDuration => BeatSeconds;
+
+        public bool IsDoubleBeatFloor(int floor)
+        {
+            if (DistrictIndex == 0) return false;
+            if (DistrictIndex == 1) return floor == 4 || floor == 8;
+            return floor > 0 && floor % 3 == 0;
+        }
 
         public float BeatSeconds
         {
@@ -175,6 +189,12 @@ namespace HushBlocks.FullGame
             {
                 if (district == null) return string.Empty;
 
+                // Priority 0: Double-Beat confirmation prompt
+                if (doubleBeatPhase == DoubleBeatPhase.SealedWaitingConfirmation)
+                {
+                    return "⚡ DOUBLE-BEAT CHAMBER SEALED! STRIKE ON NEXT BEAT! ⚡";
+                }
+
                 // Priority 1: Howler threat alert
                 if (stage != null && stage.Howler != null && stage.Howler.activeSelf && stage.HowlerAI != null)
                 {
@@ -186,6 +206,12 @@ namespace HushBlocks.FullGame
                     {
                         return "FEEDBACK HOWLER DETECTED ON LEDGE";
                     }
+                }
+
+                // Priority 1.5: Double-Beat incoming hint
+                if (isDoubleBeatBlock && !dropping)
+                {
+                    return "⚡ DOUBLE-BEAT BLOCK: TWO CONSECUTIVE RHYTHMIC STRIKES REQUIRED";
                 }
 
                 // Priority 2: Critical heart warning
@@ -301,6 +327,39 @@ namespace HushBlocks.FullGame
                 accepting = true;
             }
 
+            if (doubleBeatPhase == DoubleBeatPhase.SealedWaitingConfirmation)
+            {
+                if (moving != null)
+                {
+                    moving.Pulse(0.5f);
+                }
+
+                if (HushInput.TapDown())
+                {
+                    float b = BeatSeconds / beatDuration;
+                    float ph = Mathf.Repeat(b, 1f);
+                    float off = Mathf.Min(ph, 1f - ph) * beatDuration;
+                    bool confirmed = off <= 0.18f;
+
+                    stage.NoaController?.TriggerTrowelStrike(confirmed);
+                    doubleBeatPhase = DoubleBeatPhase.None;
+                    dropping = false;
+                    ResolveDrop(willCenterStored ? top.Center : dropXStored, off, confirmed);
+                    return;
+                }
+
+                if (AudioSettings.dspTime > doubleBeatDeadlineDsp)
+                {
+                    // Timed out on confirmation beat - chamber breaches!
+                    doubleBeatPhase = DoubleBeatPhase.None;
+                    dropping = false;
+                    MissDrop(dropXStored);
+                    return;
+                }
+
+                return;
+            }
+
             if (!dropping)
             {
                 UpdateMovingBlock(beats);
@@ -384,6 +443,14 @@ namespace HushBlocks.FullGame
             moving.SetMoving(true);
             dropping = false;
             accepting = BeatSeconds >= IntroBeats * beatDuration;
+
+            isDoubleBeatBlock = IsDoubleBeatFloor(floors);
+            doubleBeatPhase = DoubleBeatPhase.None;
+            if (isDoubleBeatBlock)
+            {
+                moving.Pulse(0.9f);
+                HushAudio.Sfx(HushAudio.SfxId.Place, 0.6f, 1.35f);
+            }
         }
 
         private void UpdateMovingBlock(float beats)
@@ -507,17 +574,30 @@ namespace HushBlocks.FullGame
 
             if (t >= 1f)
             {
+                if (isDoubleBeatBlock && doubleBeatPhase == DoubleBeatPhase.None)
+                {
+                    doubleBeatPhase = DoubleBeatPhase.SealedWaitingConfirmation;
+                    doubleBeatDeadlineDsp = AudioSettings.dspTime + beatDuration * 1.5d;
+                    dropXStored = willCenter ? top.Center : dropX;
+                    willCenterStored = willCenter;
+                    moving.MoveTo(dropXStored, dropTargetY);
+                    moving.Pulse(1f);
+                    HushAudio.Sfx(HushAudio.SfxId.Place, 0.85f, 1.4f);
+                    stage.Burst(new Vector3(dropXStored, dropTargetY, 0f), HushPalette.Cyan, 14, 1.4f);
+                    return;
+                }
+
                 dropping = false;
-                ResolveDrop(willCenter ? top.Center : dropX, dropBeatOffset);
+                ResolveDrop(willCenter ? top.Center : dropX, dropBeatOffset, false);
             }
         }
 
-        private void ResolveDrop(float x, float beatOffset)
+        private void ResolveDrop(float x, float beatOffset, bool isDoubleBeatSuccess = false)
         {
             if (moving == null) return;
 
             float centerDist = Mathf.Abs(x - top.Center);
-            bool isPerfectBeat = beatOffset <= 0.085f;
+            bool isPerfectBeat = beatOffset <= 0.085f || isDoubleBeatSuccess;
             bool isGoodBeat = beatOffset <= 0.165f;
 
             TimingGrade grade;
@@ -526,7 +606,8 @@ namespace HushBlocks.FullGame
             else grade = TimingGrade.Offbeat;
 
             // Generous rhythmic attunement: Perfect beat snaps to full width!
-            bool centered = (isPerfectBeat && centerDist <= top.Width * 0.35f)
+            bool centered = isDoubleBeatSuccess
+                         || (isPerfectBeat && centerDist <= top.Width * 0.35f)
                          || (centerDist <= 0.20f)
                          || (DistrictIndex == 0 && floors < 4 && isGoodBeat && centerDist <= top.Width * 0.45f);
 
@@ -567,7 +648,8 @@ namespace HushBlocks.FullGame
             int multiplier = Multiplier;
             int centerBonus = centered ? 30 : 0;
             int floorBonus = 25 * (floors + 1);
-            int points = Mathf.RoundToInt(basePoints * multiplier) + centerBonus + floorBonus;
+            int doubleBeatBonus = isDoubleBeatSuccess ? 300 : 0;
+            int points = Mathf.RoundToInt(basePoints * multiplier) + centerBonus + floorBonus + doubleBeatBonus;
             score += points;
             floors++;
 
@@ -628,6 +710,12 @@ namespace HushBlocks.FullGame
                 {
                     stage.HowlerAI.InitializeForStackGame(this, stage, side: -1);
                 }
+            }
+
+            if (isDoubleBeatSuccess)
+            {
+                stage.Burst(new Vector3(newCenter, top.TopY, 0f), HushPalette.Amber, 22, 2.2f);
+                HushAudio.Sfx(HushAudio.SfxId.Star, 0.95f);
             }
 
             Color color = attuned ? HushPalette.Amber : HushPalette.Cyan;

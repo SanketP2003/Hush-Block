@@ -208,8 +208,13 @@ namespace HushBlocks.FullGame
 
         public static HushButton Button(Transform parent, string label, Vector2 size, HushButton.Style style, float fontSize = 26f)
         {
-            var root = NewRect(parent, "Button " + label, size, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
+            // Ensure minimum 48x48 touch target
+            Vector2 minSize = new Vector2(Mathf.Max(48f, size.x), Mathf.Max(48f, size.y));
+            var root = NewRect(parent, "Button " + label, minSize, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
             var button = root.gameObject.AddComponent<HushButton>();
+
+            var selectable = root.gameObject.AddComponent<Selectable>();
+            selectable.transition = Selectable.Transition.None;
 
             var glow = Image(root, "Glow", HushArt.Rounded, Color.clear);
             Fill(glow.rectTransform, -7f);
@@ -220,6 +225,7 @@ namespace HushBlocks.FullGame
             Fill(background.rectTransform);
             background.type = UnityEngine.UI.Image.Type.Sliced;
             background.raycastTarget = true;
+            selectable.targetGraphic = background;
 
             var border = Image(root, "Border", HushArt.Rounded, Color.white);
             Fill(border.rectTransform, 1.5f);
@@ -235,21 +241,25 @@ namespace HushBlocks.FullGame
 
         public static HushToggle Toggle(Transform parent, string label, bool value, Action<bool> changed)
         {
-            var row = NewRect(parent, "Row " + label, new Vector2(640f, 58f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
-            var text = Text(row, "Label", label, 24f, HushPalette.Text, TextAlignmentOptions.Left);
+            var row = NewRect(parent, "Row " + label, new Vector2(640f, 48f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
+            var text = Text(row, "Label", label, 20f, HushPalette.Text, TextAlignmentOptions.Left);
             var textRect = text.rectTransform;
             textRect.anchorMin = new Vector2(0f, 0f);
             textRect.anchorMax = new Vector2(1f, 1f);
             textRect.offsetMin = new Vector2(4f, 0f);
             textRect.offsetMax = new Vector2(-100f, 0f);
 
-            var toggleRoot = NewRect(row, "Toggle", new Vector2(72f, 36f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f));
+            var toggleRoot = NewRect(row, "Toggle", new Vector2(72f, 48f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f));
             toggleRoot.anchoredPosition = new Vector2(-4f, 0f);
+
+            var selectable = toggleRoot.gameObject.AddComponent<Selectable>();
+            selectable.transition = Selectable.Transition.None;
 
             var track = Image(toggleRoot, "Track", HushArt.Rounded, HushPalette.Border);
             Fill(track.rectTransform);
             track.type = UnityEngine.UI.Image.Type.Sliced;
             track.raycastTarget = true;
+            selectable.targetGraphic = track;
 
             var knob = Image(toggleRoot, "Knob", HushArt.Circle, HushPalette.Text);
             var knobRect = knob.rectTransform;
@@ -260,6 +270,7 @@ namespace HushBlocks.FullGame
             knob.raycastTarget = false;
 
             var toggle = toggleRoot.gameObject.AddComponent<HushToggle>();
+            toggle.RowRect = row;
             toggle.Configure(track, knob, value, changed);
             return toggle;
         }
@@ -360,7 +371,10 @@ namespace HushBlocks.FullGame
 
     /// <summary>Interactive button drawn from procedural sprites.</summary>
     [RequireComponent(typeof(RectTransform))]
-    public sealed class HushButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler
+    public sealed class HushButton : MonoBehaviour,
+        IPointerEnterHandler, IPointerExitHandler,
+        IPointerDownHandler, IPointerUpHandler, IPointerClickHandler,
+        ISelectHandler, IDeselectHandler, ISubmitHandler
     {
         public enum Style { Primary, Secondary, Ghost, Danger, Icon }
 
@@ -379,7 +393,9 @@ namespace HushBlocks.FullGame
         private Color accent;
         private bool hovered;
         private bool pressed;
+        private bool isFocused;
         private bool interactable = true;
+        public bool IsInteractable => interactable;
         private float scale = 1f;
 
         public string Label => label != null ? label.text : string.Empty;
@@ -467,12 +483,15 @@ namespace HushBlocks.FullGame
         public void SetInteractable(bool value)
         {
             interactable = value;
+            var selectable = GetComponent<Selectable>();
+            if (selectable != null) selectable.interactable = value;
             if (canvasGroup != null) canvasGroup.alpha = value ? 1f : 0.35f;
             if (canvasGroup != null) canvasGroup.interactable = value;
             if (!value)
             {
                 hovered = false;
                 pressed = false;
+                isFocused = false;
             }
         }
 
@@ -484,16 +503,21 @@ namespace HushBlocks.FullGame
         private void Update()
         {
             if (background == null) return;
-            float targetScale = interactable ? (pressed ? 0.97f : hovered ? 1.025f : 1f) : 1f;
+            bool highlighted = (hovered || isFocused) && interactable;
+            float targetScale = interactable ? (pressed ? 0.96f : highlighted ? 1.028f : 1f) : 1f;
             scale = Mathf.Lerp(scale, targetScale, 1f - Mathf.Exp(-18f * Time.unscaledDeltaTime));
             transform.localScale = new Vector3(scale, scale, 1f);
 
-            Color targetFill = interactable && hovered ? hoverFill : baseFill;
+            Color targetFill = highlighted ? hoverFill : baseFill;
             background.color = Color.Lerp(background.color, targetFill, 1f - Mathf.Exp(-16f * Time.unscaledDeltaTime));
 
-            if (glow != null && glow.color.a > 0.001f)
+            Color targetBorder = isFocused ? accent : baseBorder;
+            border.color = Color.Lerp(border.color, targetBorder, 1f - Mathf.Exp(-16f * Time.unscaledDeltaTime));
+
+            if (glow != null)
             {
-                Color targetGlow = new Color(accent.r, accent.g, accent.b, interactable && hovered ? 0.3f : 0.14f);
+                float targetAlpha = isFocused ? 0.55f : highlighted ? 0.3f : (style == Style.Primary ? 0.16f : 0f);
+                Color targetGlow = new Color(accent.r, accent.g, accent.b, targetAlpha);
                 glow.color = Color.Lerp(glow.color, targetGlow, 1f - Mathf.Exp(-14f * Time.unscaledDeltaTime));
             }
 
@@ -531,10 +555,27 @@ namespace HushBlocks.FullGame
             HushAudio.Sfx(HushAudio.SfxId.UiClick, 0.65f);
             Clicked?.Invoke();
         }
+
+        public void OnSelect(BaseEventData eventData)
+        {
+            if (interactable) isFocused = true;
+        }
+
+        public void OnDeselect(BaseEventData eventData)
+        {
+            isFocused = false;
+        }
+
+        public void OnSubmit(BaseEventData eventData)
+        {
+            if (!interactable) return;
+            HushAudio.Sfx(HushAudio.SfxId.UiClick, 0.65f);
+            Clicked?.Invoke();
+        }
     }
 
     /// <summary>Pill switch used by the settings screen.</summary>
-    public sealed class HushToggle : MonoBehaviour, IPointerClickHandler
+    public sealed class HushToggle : MonoBehaviour, IPointerClickHandler, ISelectHandler, IDeselectHandler, ISubmitHandler
     {
         private Image track;
         private Image knob;
@@ -542,7 +583,9 @@ namespace HushBlocks.FullGame
         private Action<bool> changed;
         private bool value;
         private float visual;
+        private bool isFocused;
 
+        public RectTransform RowRect { get; set; }
         public bool Value => value;
 
         public void Configure(Image trackImage, Image knobImage, bool initial, Action<bool> onChanged)
@@ -568,7 +611,8 @@ namespace HushBlocks.FullGame
         {
             if (track != null)
             {
-                track.color = value ? HushPalette.Amber : HushPalette.Border;
+                Color baseColor = value ? HushPalette.Amber : HushPalette.Border;
+                track.color = isFocused ? Color.Lerp(baseColor, HushPalette.Cyan, 0.35f) : baseColor;
             }
             if (knob != null)
             {
@@ -584,6 +628,28 @@ namespace HushBlocks.FullGame
         }
 
         public void OnPointerClick(PointerEventData eventData)
+        {
+            ToggleValue();
+        }
+
+        public void OnSelect(BaseEventData eventData)
+        {
+            isFocused = true;
+            Apply();
+        }
+
+        public void OnDeselect(BaseEventData eventData)
+        {
+            isFocused = false;
+            Apply();
+        }
+
+        public void OnSubmit(BaseEventData eventData)
+        {
+            ToggleValue();
+        }
+
+        private void ToggleValue()
         {
             HushAudio.Sfx(HushAudio.SfxId.UiClick, 0.5f);
             value = !value;
