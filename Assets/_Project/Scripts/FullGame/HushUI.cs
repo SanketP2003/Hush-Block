@@ -241,8 +241,8 @@ namespace HushBlocks.FullGame
 
         public static HushToggle Toggle(Transform parent, string label, bool value, Action<bool> changed)
         {
-            var row = NewRect(parent, "Row " + label, new Vector2(640f, 48f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
-            var text = Text(row, "Label", label, 20f, HushPalette.Text, TextAlignmentOptions.Left);
+            var row = NewRect(parent, "Row " + label, new Vector2(640f, 58f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
+            var text = Text(row, "Label", label, 24f, HushPalette.Text, TextAlignmentOptions.Left);
             var textRect = text.rectTransform;
             textRect.anchorMin = new Vector2(0f, 0f);
             textRect.anchorMax = new Vector2(1f, 1f);
@@ -270,7 +270,6 @@ namespace HushBlocks.FullGame
             knob.raycastTarget = false;
 
             var toggle = toggleRoot.gameObject.AddComponent<HushToggle>();
-            toggle.RowRect = row;
             toggle.Configure(track, knob, value, changed);
             return toggle;
         }
@@ -395,7 +394,6 @@ namespace HushBlocks.FullGame
         private bool pressed;
         private bool isFocused;
         private bool interactable = true;
-        public bool IsInteractable => interactable;
         private float scale = 1f;
 
         public string Label => label != null ? label.text : string.Empty;
@@ -479,6 +477,8 @@ namespace HushBlocks.FullGame
                 baseBorder = HushPalette.WithAlpha(color, 0.45f);
             }
         }
+
+        public bool IsInteractable => interactable;
 
         public void SetInteractable(bool value)
         {
@@ -585,8 +585,8 @@ namespace HushBlocks.FullGame
         private float visual;
         private bool isFocused;
 
-        public RectTransform RowRect { get; set; }
         public bool Value => value;
+        public RectTransform RowRect => transform.parent as RectTransform;
 
         public void Configure(Image trackImage, Image knobImage, bool initial, Action<bool> onChanged)
         {
